@@ -1,23 +1,35 @@
+#include <sys/types.h>      /* needed to use pid_t, etc. */
+#include <sys/wait.h>       /* needed to use wait() */
 #include <stdio.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <sys/wait.h>
+#include <stdlib.h>
+#include <unistd.h>         /* LINUX constants and functions (fork(), etc.) */
+#include <string.h>
 
-int main(int argc, char* argv[]){
-	int pid = fork(); // child1
-	if (pid==0){ // child 1
-		execlp("./add.py",":)",argv[1],argv[2],NULL);
-
-	} else // parent
-	{
-		int pid2 = fork();
-		if (pid2==0){ // child 2
-			execlp("./div.sh",":)",argv[1],argv[2],NULL);
-		} else // parent
-		{
-			wait(0);
-			wait(0);
-			printf("parent: done\n");
-		}		
-	}
+void systemCustom(char *arg) {
+    pid_t pid = fork();
+    if (pid == 0){
+        char *name[] = { "/bin/bash","-c",arg,NULL };
+        execvp(name[0], name);
+    } else {
+        waitpid(pid, 0, 0);
+    }
+}
+int main(int argc, char *argv[]) {
+    const char * scripts[][4] = {
+        {"java ", "mathdo "},
+        {"node ", "mathdo.js "},
+        {"python ", "mathdo.py "},
+        {"sh ","mathdo.sh "},
+    };
+    int arraySize = sizeof(scripts)/sizeof(scripts[0]);
+    for (int i = 0; i < arraySize; i++) {
+        char a[50] = "";
+        strcat(a, scripts[i][0]);
+        strcat(a, scripts[i][1]);
+        strcat(a, argv[1]);
+        strcat(a, " ");
+        strcat(a, argv[2]);  
+        systemCustom(a);
+    }
+    return 0;
 }
